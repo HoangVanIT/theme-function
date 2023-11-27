@@ -1,93 +1,63 @@
-let starClicked = false;
+$(function() {
+    var starClicked = true;
 
-document.addEventListener('DOMContentLoaded', function () {
-
-    document.querySelectorAll('.star').forEach(function (star) {
-        star.addEventListener('click', function () {
-            this.querySelector('.selected').classList.add('is-animated', 'pulse');
-            let target = this;
-
-            setTimeout(function () {
-                target.querySelector('.selected').classList.remove('is-animated', 'pulse');
-            }, 1000);
-
-            starClicked = true;
-        });
+    $('.star').click(function() {
+        animateStar(this);
+        starClicked = true;
     });
 
-    document.querySelectorAll('.half').forEach(function (halfStar) {
-        halfStar.addEventListener('click', function () {
-            if (starClicked) {
+    $('.half, .full').click(function() {
+        if (starClicked) {
+            if ($(this).hasClass('half')) {
                 setHalfStarState(this);
-            }
-
-            this.closest('.rating').querySelector('.js-score').textContent = this.dataset.value;
-            this.closest('.rating').dataset.vote = this.dataset.value;
-            calculateAverage();
-            console.log(parseInt(this.dataset.value));
-        });
-
-        halfStar.addEventListener('mouseenter', function () {
-            if (!starClicked) {
-                setHalfStarState(this);
-            }
-        });
-    });
-
-    document.querySelectorAll('.full').forEach(function (fullStar) {
-        fullStar.addEventListener('click', function () {
-            if (starClicked) {
+            } else {
                 setFullStarState(this);
             }
-
-            this.closest('.rating').querySelector('.js-score').textContent = this.dataset.value;
-            this.closest('.rating').dataset.vote = this.dataset.value;
-            calculateAverage();
-            console.log(parseInt(this.dataset.value));
-        });
-
-        fullStar.addEventListener('mouseenter', function () {
-            if (!starClicked) {
-                setFullStarState(this);
-            }
-        });
-    });
-});
-
-function updateStarState(target) {
-    target.parentNode.querySelectorAll('.star').forEach(function (star) {
-        star.classList.add('animate');
-        star.querySelector('.selected').classList.add('star-colour');
+            updateScoreAndAverage(this);
+        }
     });
 
-    target.parentNode.querySelectorAll('.star').forEach(function (star) {
-        star.classList.remove('animate');
-        star.querySelector('.selected').classList.remove('star-colour');
-    });
-}
-
-function setHalfStarState(target) {
-    target.classList.add('star-colour');
-    if (target.nextElementSibling) {
-        target.nextElementSibling.classList.remove('star-colour');
+    function animateStar(target) {
+        $(target).children('.selected').addClass('is-animated pulse');
+        setTimeout(function() {
+            $(target).children('.selected').removeClass('is-animated pulse');
+        }, 1000);
     }
-    updateStarState(target);
-}
 
+    function updateStarState(target) {
+        $(target).parent().prevAll().addClass('animate').children().addClass('star-colour');
+        $(target).parent().nextAll().removeClass('animate').children().removeClass('star-colour');
+    }
 
-function setFullStarState(target) {
-    target.classList.add('star-colour');
-    target.parentNode.classList.add('animate');
-    target.previousElementSibling.classList.add('star-colour');
-    updateStarState(target);
-}
+    function setHalfStarState(target) {
+        $(target).addClass('star-colour');
+        $(target).siblings('.full').removeClass('star-colour');
+        updateStarState(target);
+    }
 
-function calculateAverage() {
-    let average = 0;
+    function setFullStarState(target) {
+        $(target).addClass('star-colour').parent().addClass('animate');
+        $(target).siblings('.half').addClass('star-colour');
+        updateStarState(target);
+    }
 
-    document.querySelectorAll('.rating').forEach(function (rating) {
-        average += parseFloat(rating.dataset.vote);
-    });
+    function updateScoreAndAverage(target) {
+        var $rating = $(target).closest('.rating');
+        var voteValue = $(target).data('value');
 
-    document.querySelector('.js-average').textContent = (average / document.querySelectorAll('.rating').length).toFixed(1);
-}
+        $rating.find('.js-score').text(voteValue);
+        $rating.find('.js-average').text(voteValue);
+
+        $rating.data('vote', voteValue);
+        calculateAverage();
+        console.log(parseInt(voteValue));
+    }
+
+    function calculateAverage() {
+        var average = 0;
+        $('.rating').each(function() {
+            average += $(this).data('vote');
+        });
+        $('.js-average').text((average / $('.rating').length).toFixed(1));
+    }
+});
